@@ -1,4 +1,6 @@
-const resolvers = {
+import { Resolvers } from "./generated";
+
+export const resolvers: Resolvers = {
   Query: {
       festivals: (_, __, {dataSources}) => {
           return dataSources.festivalAPI.getFestivals();
@@ -9,7 +11,7 @@ const resolvers = {
       recordLabels: (_, __, { dataSources }) => {
         return dataSources.festivalAPI.getRecordLabels()
       },
-      festival: (_, {name}, { dataSources }) => {
+      festival: (_, { name }, { dataSources }) => {
         return dataSources.festivalAPI.getFestivalsByBandName(name)
       },
       festivalBands: (_, {name}, {dataSources}) => {
@@ -23,5 +25,3 @@ const resolvers = {
       }
   },
 }
-
-module.exports = resolvers;

@@ -1,21 +1,22 @@
-const { RESTDataSource } = require('apollo-datasource-rest');
-const fetch = require('node-fetch');
+import { RESTDataSource } from 'apollo-datasource-rest';
+import fetch from 'node-fetch';
 
-class FestivalAPI extends RESTDataSource {
+export default class FestivalAPI extends RESTDataSource {
+  response: any[];
   constructor() {
     super();
     this.baseURL = "https://eacp.energyaustralia.com.au/codingtest/api/v1/"
     this.response = []
   }
 
-  festivalReducer(festival) {
+  festivalReducer(festival: any) {
     return {
         name: festival.name,
         bands: festival.bands
     }
   }
 
-  changeNullFields(data) {
+  changeNullFields(data: any[]) {
     for (const obj of data) {
         if (obj.name === undefined || obj.name === null) {
           console.log(typeof obj.name)
@@ -27,7 +28,7 @@ class FestivalAPI extends RESTDataSource {
             }
         }
       }
-      const result = data.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
+      const result = data.sort((a: { name: string; }, b: { name: string; }) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
       return Array.isArray(result)
         ? result.map((festival) => this.festivalReducer(festival))
         : [];
@@ -57,7 +58,7 @@ class FestivalAPI extends RESTDataSource {
         return this.changeNullFields(this.response)
   }
 
-  aggregateBands(data) {
+  aggregateBands(data: any) {
     let result = []
     for (const obj of data) {
       if (obj.bands) {
@@ -69,11 +70,11 @@ class FestivalAPI extends RESTDataSource {
     : [];
   }
 
-  aggregateRecordLabels(data) {
-    let result = []
+  aggregateRecordLabels(data: { name: any; bands: any; }[]) {
+    let result: { name: any; }[] = []
     for (const obj of data) {
       if (obj.bands) {
-        obj.bands.map(band => {
+        obj.bands.map((band: { recordLabel: any; }) => {
           result.push({ "name": band.recordLabel })
         })
       }
@@ -94,22 +95,22 @@ class FestivalAPI extends RESTDataSource {
     return this.aggregateRecordLabels(allFestivals)
   }
 
-  removeDuplicates(collection) {
-    return collection.reduce((filtered, item) => 
-      filtered.some(filteredItem => 
+  removeDuplicates(collection: any[]) {
+    return collection.reduce((filtered: any[], item: any) => 
+      filtered.some((filteredItem: any) => 
         JSON.stringify(filteredItem ) == JSON.stringify(item)) 
           ? filtered
           : [...filtered, item]
     , [])
   }
 
-  getFestivalsByBandName(name) {
-    const allFestivals = this.response.length > 1 ? this.changeNullFields(this.response) : this.getFestivals()
+  getFestivalsByBandName(name: any) {
+    const allFestivals: any = this.response.length > 1 ? this.changeNullFields(this.response) : this.getFestivals()
     console.log(allFestivals)
-    let result = []
+    let result: { name: any; }[] = []
     for (const obj of allFestivals) {
       if (obj.bands) {
-        obj.bands.map(band => {
+        obj.bands.map((band: { name: any; }) => {
           if (band.name == name) {
             result.push({ "name": obj.name })
           }
@@ -121,7 +122,7 @@ class FestivalAPI extends RESTDataSource {
     : [];
   }
 
-  getFestivalBandsByName(name) {
+  getFestivalBandsByName(name: any) {
     const festivalsArray = this.getFestivalsByBandName(name)
     return [{
       "name": name,
@@ -129,12 +130,12 @@ class FestivalAPI extends RESTDataSource {
     }]
   }
 
-  getLabelFestivalBandsByName(label) {
-    const allFestivals = this.getFestivals()
-    let result = []
+  getLabelFestivalBandsByName(label: any) {
+    const allFestivals: any = this.getFestivals()
+    let result: any[] = []
     for (const obj of allFestivals) {
       if (obj.bands) {
-        obj.bands.map(band => {
+        obj.bands.map((band: { recordLabel: any; name: any; }) => {
           if (band.recordLabel == label) {
             const festivalsArray = this.getFestivalBandsByName(band.name)
             result.push(...festivalsArray)
@@ -150,10 +151,10 @@ class FestivalAPI extends RESTDataSource {
 
   getLabels() {
     const allFestivals = this.changeNullFields(this.response)
-    let result = []
+    let result: any[] = []
     for (const obj of allFestivals) {
       if (obj.bands) {
-        obj.bands.map(band => {
+        obj.bands.map((band: { recordLabel: any; }) => {
           const festivalsArray = this.getLabelFestivalBandsByName(band.recordLabel)
           result.push(...festivalsArray)
         })
@@ -166,5 +167,3 @@ class FestivalAPI extends RESTDataSource {
     : [];
   }
 }
-
-module.exports = FestivalAPI;

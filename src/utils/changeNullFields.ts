@@ -9,8 +9,5 @@ export const changeNullFields: any = (data: any[]) => {
       }
     }
   }
-  const result = data.sort((a: { name: string }, b: { name: string }) =>
-    a.name.toLowerCase().localeCompare(b.name.toLowerCase()),
-  )
-  return result
+  return data
 }

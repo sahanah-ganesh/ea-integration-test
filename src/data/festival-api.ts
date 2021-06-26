@@ -2,7 +2,7 @@ import { RESTDataSource } from 'apollo-datasource-rest'
 import { removeDuplicates } from '../utils/removeDuplicates'
 import { sortAscending } from '../utils/sortAscending'
 import { arrayCheck } from '../utils/arrayCheck'
-import { changeNullFields } from '../utils/changeNullFields'
+import { transformDataAllChecks } from '../utils/transformDataAllChecks'
 import axios from 'axios'
 
 export default class FestivalAPI extends RESTDataSource {
@@ -17,15 +17,24 @@ export default class FestivalAPI extends RESTDataSource {
     }
   }
 
-  getFestivals() {
-    axios
-      .get(`${process.env.URL}`)
+  fetchFromAPI = () => {
+    const url = `${process.env.URL}`
+    const response = axios
+      .get(url)
       .then((response: any) => {
-        return changeNullFields(response.data)
+        return response.data
       })
       .catch((error: any) => {
         return console.log(`HTTP error status: ${error}`)
       })
+    return response
+  }
+
+  getFestivals = async () => {
+    const allFestivals = await this.fetchFromAPI()
+    const dataTransformed = transformDataAllChecks(allFestivals)
+    console.log(dataTransformed)
+    return dataTransformed
   }
 
   aggregateBands(data: any) {
@@ -120,9 +129,10 @@ export default class FestivalAPI extends RESTDataSource {
         })
       }
     }
-    console.log(result)
-    const resultSorted = sortAscending(result)
-    const duplicatesRemoved = removeDuplicates(resultSorted)
+    result = result.sort((a: any, b: any) =>
+      a.label.toLowerCase().localeCompare(b.label.toLowerCase()),
+    )
+    const duplicatesRemoved = removeDuplicates(result)
     return arrayCheck(duplicatesRemoved)
   }
 }

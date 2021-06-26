@@ -1,61 +1,31 @@
-import { RESTDataSource } from 'apollo-datasource-rest';
-import fetch from 'node-fetch';
+import { RESTDataSource } from 'apollo-datasource-rest'
+import { removeDuplicates } from '../utils/removeDuplicates'
+import { sortAscending } from '../utils/sortAscending'
+import { arrayCheck } from '../utils/arrayCheck'
+import { changeNullFields } from '../utils/changeNullFields'
+import axios from 'axios'
 
 export default class FestivalAPI extends RESTDataSource {
-  response: any[];
   constructor() {
-    super();
-    this.baseURL = "https://eacp.energyaustralia.com.au/codingtest/api/v1/"
-    this.response = []
+    super()
   }
 
   festivalReducer(festival: any) {
     return {
-        name: festival.name,
-        bands: festival.bands
+      name: festival.name,
+      bands: festival.bands,
     }
   }
 
-  changeNullFields(data: any[]) {
-    for (const obj of data) {
-        if (obj.name === undefined || obj.name === null) {
-          console.log(typeof obj.name)
-          obj.name = "";
-        }
-        for (const nestedObj of obj.bands) {
-            if (nestedObj.recordLabel === undefined || obj.recordLabel === null) {
-                nestedObj.recordLabel = ""
-            }
-        }
-      }
-      const result = data.sort((a: { name: string; }, b: { name: string; }) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
-      return Array.isArray(result)
-        ? result.map((festival) => this.festivalReducer(festival))
-        : [];
-    }
-
-  async getFestivals() {
-    if (this.response.length > 1) {
-      return this.changeNullFields(this.response)
-    }
-    await fetch('https://eacp.energyaustralia.com.au/codingtest/api/v1/festivals')
-      .then(res => {
-        if (res.status >= 200 && res.status < 300) {
-          return res.json()
-        }
-        console.log(res.status)
-        return
+  getFestivals() {
+    axios
+      .get(`${process.env.URL}`)
+      .then((response: any) => {
+        return changeNullFields(response.data)
       })
-      .then(json => {
-        console.log(json)
-        this.response.push(...json)
-        return this.changeNullFields(this.response)
+      .catch((error: any) => {
+        return console.log(`HTTP error status: ${error}`)
       })
-        .catch(err => {
-          console.log(err)
-          return
-        })
-        return this.changeNullFields(this.response)
   }
 
   aggregateBands(data: any) {
@@ -65,105 +35,94 @@ export default class FestivalAPI extends RESTDataSource {
         result.push(...obj.bands)
       }
     }
-    return Array.isArray(result)
-    ? result
-    : [];
+    return arrayCheck(result)
   }
 
-  aggregateRecordLabels(data: { name: any; bands: any; }[]) {
-    let result: { name: any; }[] = []
+  aggregateRecordLabels(data: any) {
+    let result: any = []
     for (const obj of data) {
       if (obj.bands) {
-        obj.bands.map((band: { recordLabel: any; }) => {
-          result.push({ "name": band.recordLabel })
+        obj.bands.map((band: any) => {
+          result.push({ name: band.recordLabel })
         })
       }
     }
-    const duplicatesRemoved = this.removeDuplicates(result)
-    return Array.isArray(duplicatesRemoved)
-    ? duplicatesRemoved
-    : [];
+    const duplicatesRemoved = removeDuplicates(result)
+    return arrayCheck(duplicatesRemoved)
   }
 
-  getBands() {
-    const allFestivals = this.changeNullFields(this.response)
+  async getBands() {
+    let allFestivals = await this.getFestivals()
     return this.aggregateBands(allFestivals)
   }
 
-  getRecordLabels() {
-    const allFestivals = this.changeNullFields(this.response)
+  async getRecordLabels() {
+    let allFestivals = await this.getFestivals()
     return this.aggregateRecordLabels(allFestivals)
   }
 
-  removeDuplicates(collection: any[]) {
-    return collection.reduce((filtered: any[], item: any) => 
-      filtered.some((filteredItem: any) => 
-        JSON.stringify(filteredItem ) == JSON.stringify(item)) 
-          ? filtered
-          : [...filtered, item]
-    , [])
-  }
-
-  getFestivalsByBandName(name: any) {
-    const allFestivals: any = this.response.length > 1 ? this.changeNullFields(this.response) : this.getFestivals()
-    console.log(allFestivals)
-    let result: { name: any; }[] = []
-    for (const obj of allFestivals) {
-      if (obj.bands) {
-        obj.bands.map((band: { name: any; }) => {
-          if (band.name == name) {
-            result.push({ "name": obj.name })
-          }
-        })
+  async getFestivalsByBandName(name: any) {
+    try {
+      const allFestivals: any = await this.getFestivals()
+      let result: any = []
+      for (const obj of allFestivals) {
+        if (obj.bands) {
+          obj.bands.map((band: any) => {
+            if (band.name == name) {
+              result.push({ name: obj.name })
+            }
+          })
+        }
       }
+      return arrayCheck(result)
+    } catch (e) {
+      console.log(e)
     }
-    return Array.isArray(result)
-    ? result
-    : [];
   }
 
-  getFestivalBandsByName(name: any) {
-    const festivalsArray = this.getFestivalsByBandName(name)
-    return [{
-      "name": name,
-      "festivals": festivalsArray
-    }]
+  async getFestivalBandsByName(name: any) {
+    let festivalsArray = await this.getFestivalsByBandName(name)
+    return [
+      {
+        name: name,
+        festivals: festivalsArray,
+      },
+    ]
   }
 
-  getLabelFestivalBandsByName(label: any) {
-    const allFestivals: any = this.getFestivals()
-    let result: any[] = []
+  async getLabelFestivalBandsByName(label: any) {
+    let allFestivals = await this.getFestivals()
+    let result: any = []
     for (const obj of allFestivals) {
       if (obj.bands) {
-        obj.bands.map((band: { recordLabel: any; name: any; }) => {
+        obj.bands.map(async (band: any) => {
           if (band.recordLabel == label) {
-            const festivalsArray = this.getFestivalBandsByName(band.name)
+            const festivalsArray = await this.getFestivalBandsByName(band.name)
             result.push(...festivalsArray)
           }
         })
       }
     }
-    result = result.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
-    return Array.isArray(result)
-    ? [{ "label": label, "bands": result }]
-    : [];
+    const resultSorted = sortAscending(result)
+    return Array.isArray(resultSorted) ? [{ label: label, bands: result }] : []
   }
 
-  getLabels() {
-    const allFestivals = this.changeNullFields(this.response)
-    let result: any[] = []
+  async getLabels() {
+    let allFestivals = await this.getFestivals()
+    let result: any = []
     for (const obj of allFestivals) {
       if (obj.bands) {
-        obj.bands.map((band: { recordLabel: any; }) => {
-          const festivalsArray = this.getLabelFestivalBandsByName(band.recordLabel)
+        obj.bands.map(async (band: any) => {
+          let festivalsArray = await this.getLabelFestivalBandsByName(
+            band.recordLabel,
+          )
           result.push(...festivalsArray)
         })
       }
     }
-    result = result.sort((a, b) => a.label.toLowerCase().localeCompare(b.label.toLowerCase()))
-    result = this.removeDuplicates(result)
-    return Array.isArray(result)
-    ? result
-    : [];
+    console.log(result)
+    const resultSorted = sortAscending(result)
+    const duplicatesRemoved = removeDuplicates(resultSorted)
+    return arrayCheck(duplicatesRemoved)
   }
 }

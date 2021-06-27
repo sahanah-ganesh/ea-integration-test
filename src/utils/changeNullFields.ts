@@ -1,13 +1,31 @@
-export const changeNullFields: any = (data: any[]) => {
-  for (const obj of data) {
-    if (obj.name === undefined || obj.name === null) {
-      obj.name = ''
+import { Festivals } from '../interfaces/festivals'
+const { difference } = require('lodash')
+
+const festivalDefaults = { name: String() }
+const bandsDefaults = { name: String(), recordLabel: String() }
+
+export const changeNullFields = (festivals: [Festivals]) => {
+  for (const festival of festivals) {
+    const festivalsRequiredKeys = Object.keys(festivalDefaults)
+    const objKeys = Object.keys(festival)
+    const missingFestivalKeys = difference(festivalsRequiredKeys, objKeys)
+
+    for (const missingFestivalKey of missingFestivalKeys) {
+      // @ts-ignore
+      festival[missingFestivalKey] = festivalDefaults[missingFestivalKey]
     }
-    for (const nestedObj of obj.bands) {
-      if (nestedObj.recordLabel === undefined || obj.recordLabel === null) {
-        nestedObj.recordLabel = ''
+
+    const bandRequiredKeys = Object.keys(bandsDefaults)
+
+    for (const band of festival.bands) {
+      const objKeys = Object.keys(band)
+      const missingBandKeys = difference(bandRequiredKeys, objKeys)
+
+      for (const missingBandKey of missingBandKeys) {
+        // @ts-ignore
+        band[missingBandKey] = bandsDefaults[missingBandKey]
       }
     }
   }
-  return data
+  return festivals
 }

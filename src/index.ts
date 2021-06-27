@@ -1,3 +1,4 @@
+// read .env if in production or .env.development if in development
 require('dotenv').config({
   path: process.env.NODE_ENV === 'production' ? '.env' : '.env.development',
 })
@@ -13,8 +14,6 @@ const app = express()
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  introspection: true,
-  playground: true,
   dataSources: () => {
     return {
       festivalAPI: new FestivalAPI(),

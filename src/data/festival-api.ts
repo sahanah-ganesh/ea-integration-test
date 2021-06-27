@@ -42,7 +42,7 @@ export default class FestivalAPI extends RESTDataSource {
         result.push(...obj.bands)
       }
     }
-    return arrayCheck(result)
+    return result
   }
 
   aggregateRecordLabels(data: any) {
@@ -54,8 +54,7 @@ export default class FestivalAPI extends RESTDataSource {
         })
       }
     }
-    const duplicatesRemoved = removeDuplicates(result)
-    return arrayCheck(duplicatesRemoved)
+    return removeDuplicates(result)
   }
 
   async getBands() {

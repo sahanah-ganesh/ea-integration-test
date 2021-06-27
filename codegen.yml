@@ -1,3 +1,5 @@
+# generated codegen file
+# targets schema to build typescript file
 overwrite: true
 schema: 'src/graphql/schema.graphql'
 documents: null

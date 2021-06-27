@@ -17,7 +17,7 @@ export default class FestivalAPI extends RESTDataSource {
     }
   }
 
-  fetchFromAPI = () => {
+  fetchFromAPI() {
     const url = `${process.env.URL}`
     const response = axios
       .get(url)
@@ -30,7 +30,7 @@ export default class FestivalAPI extends RESTDataSource {
     return response
   }
 
-  getFestivals = async () => {
+  async getFestivals() {
     const allFestivals = await this.fetchFromAPI()
     const dataTransformed = transformDataAllChecks(allFestivals)
     console.log(dataTransformed)

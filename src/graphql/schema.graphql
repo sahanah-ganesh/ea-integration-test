@@ -1,7 +1,5 @@
 type Query {
   festivals: [Festival]!
-  bands: [Band]!
-  recordLabels: [RecordLabel]!
   festival(name: String!): [FestivalName]!
   festivalBands(name: String!): [FestivalBand]!
   label(label: String!): [LabelFestivalBand]!
@@ -25,10 +23,6 @@ type Band {
 type FestivalBand {
   name: String
   festivals: [FestivalName]
-}
-
-type RecordLabel {
-  name: String
 }
 
 type LabelFestivalBand {

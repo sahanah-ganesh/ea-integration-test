@@ -7,13 +7,6 @@ import axios from 'axios'
 import logger from '../utils/logger'
 
 export default class FestivalAPI extends RESTDataSource {
-  festivalReducer(festival: any) {
-    return {
-      name: festival.name,
-      bands: festival.bands,
-    }
-  }
-
   fetchFromAPI() {
     const url = `${process.env.URL}`
     logger.debug('Fetching festivals...')
@@ -42,46 +35,6 @@ export default class FestivalAPI extends RESTDataSource {
     }
     const dataTransformed = transformDataAllChecks(allFestivals)
     return dataTransformed
-  }
-
-  aggregateBands(data: any) {
-    const result: any = []
-    for (const obj of data) {
-      if (obj.bands) {
-        result.push(...obj.bands)
-      }
-    }
-    return result
-  }
-
-  aggregateRecordLabels(data: any) {
-    const result: any = []
-    for (const obj of data) {
-      if (obj.bands) {
-        obj.bands.map((band: any) => {
-          result.push({ name: band.recordLabel })
-        })
-      }
-    }
-    return removeDuplicates(result)
-  }
-
-  async getBands() {
-    const allFestivals = await this.getFestivals()
-    if (allFestivals.length < 1) {
-      logger.error('Returned empty array')
-      return []
-    }
-    return this.aggregateBands(allFestivals)
-  }
-
-  async getRecordLabels() {
-    const allFestivals = await this.getFestivals()
-    if (allFestivals.length < 1) {
-      logger.error('Returned empty array')
-      return []
-    }
-    return this.aggregateRecordLabels(allFestivals)
   }
 
   async getFestivalsByBandName(name: any) {

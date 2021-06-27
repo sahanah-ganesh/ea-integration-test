@@ -6,14 +6,6 @@ export const resolvers: Resolvers = {
     festivals: (_, __, { dataSources }) => {
       return dataSources.festivalAPI.getFestivals()
     },
-    bands: (_, __, { dataSources }) => {
-      logger.debug('Fetching all bands')
-      return dataSources.festivalAPI.getBands()
-    },
-    recordLabels: (_, __, { dataSources }) => {
-      logger.debug('Fetching all record labels')
-      return dataSources.festivalAPI.getRecordLabels()
-    },
     festival: (_, { name }, { dataSources }) => {
       logger.debug('Fetching festival by name')
       return dataSources.festivalAPI.getFestivalsByBandName(name)

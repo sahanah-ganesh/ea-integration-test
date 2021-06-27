@@ -20,17 +20,26 @@ export default class FestivalAPI extends RESTDataSource {
     const response = axios
       .get(url)
       .then((response: any) => {
-        logger.info('Successfully fetched festivals')
-        return response.data
+        if (response.data) {
+          logger.info('Successfully fetched festivals')
+          return response.data
+        }
+        logger.error('Returned empty array')
+        return []
       })
       .catch((error: any) => {
-        return logger.error('Error in fetching festivals: ', error)
+        logger.error('Error in fetching festivals: ', error)
+        return []
       })
     return response
   }
 
   async getFestivals() {
     const allFestivals = await this.fetchFromAPI()
+    if (allFestivals.length < 1) {
+      logger.error('Returned empty array')
+      return []
+    }
     const dataTransformed = transformDataAllChecks(allFestivals)
     return dataTransformed
   }
@@ -59,16 +68,28 @@ export default class FestivalAPI extends RESTDataSource {
 
   async getBands() {
     const allFestivals = await this.getFestivals()
+    if (allFestivals.length < 1) {
+      logger.error('Returned empty array')
+      return []
+    }
     return this.aggregateBands(allFestivals)
   }
 
   async getRecordLabels() {
     const allFestivals = await this.getFestivals()
+    if (allFestivals.length < 1) {
+      logger.error('Returned empty array')
+      return []
+    }
     return this.aggregateRecordLabels(allFestivals)
   }
 
   async getFestivalsByBandName(name: any) {
     const allFestivals: any = await this.getFestivals()
+    if (allFestivals.length < 1) {
+      logger.error('Returned empty array')
+      return []
+    }
     let result: any = []
     for (const obj of allFestivals) {
       if (obj.bands) {
@@ -79,8 +100,7 @@ export default class FestivalAPI extends RESTDataSource {
         })
       }
     }
-    const resultSorted = sortAscending(result)
-    return arrayCheck(resultSorted)
+    return sortAscending(result)
   }
 
   async getFestivalBandsByName(name: any) {
@@ -95,6 +115,10 @@ export default class FestivalAPI extends RESTDataSource {
 
   async getLabelFestivalBandsByName(label: any) {
     const allFestivals = await this.getFestivals()
+    if (allFestivals.length < 1) {
+      logger.error('Returned empty array')
+      return []
+    }
     let result: any = []
     for (const obj of allFestivals) {
       if (obj.bands) {
@@ -112,6 +136,10 @@ export default class FestivalAPI extends RESTDataSource {
 
   async getLabels() {
     const allFestivals = await this.getFestivals()
+    if (allFestivals.length < 1) {
+      logger.error('Returned empty array')
+      return []
+    }
     let result: any = []
     for (const obj of allFestivals) {
       if (obj.bands) {

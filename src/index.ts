@@ -11,6 +11,7 @@ import { importSchema } from 'graphql-import'
 const typeDefs = importSchema('./src/graphql/schema.graphql')
 
 const app = express()
+
 const server = new ApolloServer({
   typeDefs,
   resolvers,
@@ -21,7 +22,16 @@ const server = new ApolloServer({
   },
 })
 
-server.applyMiddleware({ app, path: '/graphql' })
+server.applyMiddleware({
+  app,
+  // http://localhost:4000/graphql for graphQL playground
+  path: '/graphql',
+  // cors needs to be specified for apollo studio to work. reference: https://github.com/apollographql/apollo-server/issues/1142#issuecomment-486657060
+  cors: {
+    credentials: true,
+    origin: true,
+  },
+})
 
 app.listen(process.env.PORT, () => {
   console.log(`

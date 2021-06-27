@@ -4,12 +4,9 @@ import { sortAscending } from '../utils/sortAscending'
 import { arrayCheck } from '../utils/arrayCheck'
 import { transformDataAllChecks } from '../utils/transformDataAllChecks'
 import axios from 'axios'
+import logger from '../utils/logger'
 
 export default class FestivalAPI extends RESTDataSource {
-  constructor() {
-    super()
-  }
-
   festivalReducer(festival: any) {
     return {
       name: festival.name,
@@ -19,13 +16,15 @@ export default class FestivalAPI extends RESTDataSource {
 
   fetchFromAPI() {
     const url = `${process.env.URL}`
+    logger.debug('Fetching festivals...')
     const response = axios
       .get(url)
       .then((response: any) => {
+        logger.info('Successfully fetched festivals')
         return response.data
       })
       .catch((error: any) => {
-        return console.log(`HTTP error status: ${error}`)
+        return logger.error('Error in fetching festivals: ', error)
       })
     return response
   }
@@ -33,12 +32,11 @@ export default class FestivalAPI extends RESTDataSource {
   async getFestivals() {
     const allFestivals = await this.fetchFromAPI()
     const dataTransformed = transformDataAllChecks(allFestivals)
-    console.log(dataTransformed)
     return dataTransformed
   }
 
   aggregateBands(data: any) {
-    let result = []
+    const result: any = []
     for (const obj of data) {
       if (obj.bands) {
         result.push(...obj.bands)
@@ -48,7 +46,7 @@ export default class FestivalAPI extends RESTDataSource {
   }
 
   aggregateRecordLabels(data: any) {
-    let result: any = []
+    const result: any = []
     for (const obj of data) {
       if (obj.bands) {
         obj.bands.map((band: any) => {
@@ -61,36 +59,33 @@ export default class FestivalAPI extends RESTDataSource {
   }
 
   async getBands() {
-    let allFestivals = await this.getFestivals()
+    const allFestivals = await this.getFestivals()
     return this.aggregateBands(allFestivals)
   }
 
   async getRecordLabels() {
-    let allFestivals = await this.getFestivals()
+    const allFestivals = await this.getFestivals()
     return this.aggregateRecordLabels(allFestivals)
   }
 
   async getFestivalsByBandName(name: any) {
-    try {
-      const allFestivals: any = await this.getFestivals()
-      let result: any = []
-      for (const obj of allFestivals) {
-        if (obj.bands) {
-          obj.bands.map((band: any) => {
-            if (band.name == name) {
-              result.push({ name: obj.name })
-            }
-          })
-        }
+    const allFestivals: any = await this.getFestivals()
+    let result: any = []
+    for (const obj of allFestivals) {
+      if (obj.bands) {
+        obj.bands.map((band: any) => {
+          if (band.name == name) {
+            result.push({ name: obj.name })
+          }
+        })
       }
-      return arrayCheck(result)
-    } catch (e) {
-      console.log(e)
     }
+    const resultSorted = sortAscending(result)
+    return arrayCheck(resultSorted)
   }
 
   async getFestivalBandsByName(name: any) {
-    let festivalsArray = await this.getFestivalsByBandName(name)
+    const festivalsArray = await this.getFestivalsByBandName(name)
     return [
       {
         name: name,
@@ -100,7 +95,7 @@ export default class FestivalAPI extends RESTDataSource {
   }
 
   async getLabelFestivalBandsByName(label: any) {
-    let allFestivals = await this.getFestivals()
+    const allFestivals = await this.getFestivals()
     let result: any = []
     for (const obj of allFestivals) {
       if (obj.bands) {
@@ -117,12 +112,12 @@ export default class FestivalAPI extends RESTDataSource {
   }
 
   async getLabels() {
-    let allFestivals = await this.getFestivals()
+    const allFestivals = await this.getFestivals()
     let result: any = []
     for (const obj of allFestivals) {
       if (obj.bands) {
         obj.bands.map(async (band: any) => {
-          let festivalsArray = await this.getLabelFestivalBandsByName(
+          const festivalsArray = await this.getLabelFestivalBandsByName(
             band.recordLabel,
           )
           result.push(...festivalsArray)

@@ -1,4 +1,6 @@
-require('dotenv').config()
+require('dotenv').config({
+  path: process.env.NODE_ENV === 'production' ? '.env' : '.env.development',
+})
 import express from 'express'
 import { ApolloServer } from 'apollo-server-express'
 import { resolvers } from './graphql/resolvers'

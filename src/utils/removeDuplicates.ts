@@ -1,3 +1,4 @@
+// goes through array of objects to remove duplicate values
 export const removeDuplicates = (collection: any[]) => {
   return collection.reduce(
     (filtered: any[], item: any) =>

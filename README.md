@@ -42,12 +42,12 @@ For example:
 ```
    
 Elements for you to consider:
-⋅⋅* How could we dockerize this application?
-⋅⋅* Logging is important. Does your solution includes structured information?
-⋅⋅* How do we configure the app to run on multiple environments?
-⋅⋅* Building and running the application should be easy. Have you provided instructions?
-⋅⋅* A good solution should include documentation.
-⋅⋅* Write code which you would be proud to commit at work or to an open-source project.
+- How could we dockerize this application?
+- Logging is important. Does your solution includes structured 
+- How do we configure the app to run on multiple environments?
+- Building and running the application should be easy. Have you provided instructions?
+- A good solution should include documentation.
+- Write code which you would be proud to commit at work or to an open-source project.
 
 
 ## Technologies

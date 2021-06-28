@@ -1,3 +1,5 @@
+// ascending alphabetical sort by name
+// checks if nested array of band objects exists and sorts by name
 export const sortAscending = (data: any) => {
   for (const obj of data) {
     if (obj.bands) {

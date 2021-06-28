@@ -2,10 +2,10 @@
   "name": "ea-graph",
   "version": "1.0.0",
   "description": "backend demo app",
-  "main": "./src/index.ts",
+  "main": "./src/server.ts",
   "scripts": {
-    "start": "NODE_ENV=production NODE_PATH=./build node build/index.ts",
-    "dev": "NODE_ENV=development nodemon ./src/index.ts",
+    "start": "NODE_ENV=production NODE_PATH=./build node build/server.js",
+    "dev": "NODE_ENV=development nodemon ./src/server.ts",
     "test": "test",
     "codegen": "graphql-codegen --config codegen.yml",
     "build": "tsc -p ."
@@ -23,6 +23,7 @@
     "graphql": "15.5.1",
     "graphql-import": "1.0.2",
     "lodash": "4.17.21",
+    "redis": "^3.1.2",
     "winston": "3.3.3"
   },
   "devDependencies": {

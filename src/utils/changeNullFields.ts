@@ -1,9 +1,12 @@
 import { Festivals } from '../interfaces/festivals'
 const { difference } = require('lodash')
 
+// hardcoding the expected object key names that could return null or undefined
 const festivalDefaults = { name: String() }
 const bandsDefaults = { name: String(), recordLabel: String() }
 
+// goes through each festival object in festivals array to change null or undefined object keys into strings
+// goes through nested array of band objects in festival to change null or undefined object keys into strings
 export const changeNullFields = (festivals: [Festivals]) => {
   for (const festival of festivals) {
     const festivalsRequiredKeys = Object.keys(festivalDefaults)

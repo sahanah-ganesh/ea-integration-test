@@ -6,43 +6,68 @@ import { transformDataAllChecks } from '../utils/transformDataAllChecks'
 import axios from 'axios'
 import logger from '../utils/logger'
 
+// using async redis which is a wrapper allowing the use of async/await for redis
+const asyncRedis = require('async-redis')
+
+const client = asyncRedis.createClient()
+
+client.on('error', function (err: any) {
+  logger.error(err)
+})
+
 export default class FestivalAPI extends RESTDataSource {
+  // fetches from redis cache and returns parsed response
+  // if there is an error, fetches from API instead
+  async fetchFromCache() {
+    const response = await client
+      .get('data')
+      .then((res: any) => {
+        const parsedResponse = JSON.parse(res)
+        return parsedResponse
+      })
+      .catch((err: any) => {
+        logger.error('Error fetching from cache: ', err)
+        return this.fetchFromAPI()
+      })
+    return response
+  }
+
+  // fetches from API but only successfully returns complete data (content-length of over 1000)
+  // transforms the data to change null fields to empty string, removes duplicates, sorts by ascending alphabet and checks if it is an array
+  // if there is partial data, an empty array is returned. TO DO: allow for partial data return?
+  // logs any errors
   fetchFromAPI() {
     const url = `${process.env.URL}`
     logger.debug('Fetching festivals...')
     const response = axios
       .get(url)
       .then((response: any) => {
-        if (response.data) {
+        if (response.data && response.headers['content-length'] > 1000) {
           logger.info('Successfully fetched festivals')
-          return response.data
+          const dataTransformed = transformDataAllChecks(response.data)
+          client.set('data', JSON.stringify(dataTransformed))
+          return dataTransformed
         }
         logger.error('Returned empty array')
         return []
       })
       .catch((error: any) => {
         logger.error('Error in fetching festivals: ', error)
-        return []
       })
     return response
   }
 
+  // returns data from cache and ensures data is correctly transformed
   async getFestivals() {
-    const allFestivals = await this.fetchFromAPI()
-    if (allFestivals.length < 1) {
-      logger.error('Returned empty array')
-      return []
-    }
+    const allFestivals = await this.fetchFromCache()
     const dataTransformed = transformDataAllChecks(allFestivals)
     return dataTransformed
   }
 
+  // checks if the band name in the query is the same as the band name in the data
+  // returns array of band name objects sorted by ascending alphabet
   async getFestivalsByBandName(name: any) {
-    const allFestivals: any = await this.getFestivals()
-    if (allFestivals.length < 1) {
-      logger.error('Returned empty array')
-      return []
-    }
+    const allFestivals = await this.getFestivals()
     let result: any = []
     for (const obj of allFestivals) {
       if (obj.bands) {
@@ -66,47 +91,39 @@ export default class FestivalAPI extends RESTDataSource {
     ]
   }
 
+  // goes through array of band objects to check if recordLabel matches query label
+  // runs query with those band names to return festivals, sorts ascending alphabet and returns transformed data structure
   async getLabelFestivalBandsByName(label: any) {
     const allFestivals = await this.getFestivals()
-    if (allFestivals.length < 1) {
-      logger.error('Returned empty array')
-      return []
-    }
-    let result: any = []
+    const result: any = []
     for (const obj of allFestivals) {
       if (obj.bands) {
-        obj.bands.map(async (band: any) => {
+        for (const band of obj.bands) {
           if (band.recordLabel == label) {
             const festivalsArray = await this.getFestivalBandsByName(band.name)
             result.push(...festivalsArray)
           }
-        })
+        }
       }
     }
     const resultSorted = sortAscending(result)
-    return Array.isArray(resultSorted) ? [{ label: label, bands: result }] : []
+    return [{ label: label, bands: resultSorted }]
   }
 
+  // similar to above function but returning all labels with a transformed data structure
   async getLabels() {
     const allFestivals = await this.getFestivals()
-    if (allFestivals.length < 1) {
-      logger.error('Returned empty array')
-      return []
-    }
     let result: any = []
     for (const obj of allFestivals) {
       if (obj.bands) {
-        obj.bands.map(async (band: any) => {
+        for (const band of obj.bands) {
           const festivalsArray = await this.getLabelFestivalBandsByName(
             band.recordLabel,
           )
           result.push(...festivalsArray)
-        })
+        }
       }
     }
-    result = result.sort((a: any, b: any) =>
-      a.label.toLowerCase().localeCompare(b.label.toLowerCase()),
-    )
     const duplicatesRemoved = removeDuplicates(result)
     return arrayCheck(duplicatesRemoved)
   }

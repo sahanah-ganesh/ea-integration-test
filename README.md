@@ -49,12 +49,13 @@ Elements for you to consider:
 - A good solution should include documentation.
 - Write code which you would be proud to commit at work or to an open-source project.
 
-
 ## Technologies
 
 - GraphQL to solve for the problem of overfetching as the API endpoint is throttled
 
 - Apollo-Server-Express over Apollo-Server due to better TypeScript and community support
+
+- Redis for cache. As API endpoint is throttled and occassionally returns partial data, the result of a successful API call is saved in the cache and all further queries are performed from the cached data
 
 - TypeScript is being used but more interfaces will need to be created to prevent any types throughout the codebase
 
@@ -88,8 +89,39 @@ Elements for you to consider:
     - To stop the container: `docker-compose down`
     - To start container in production `docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d`
 
+- Download Redis with the following commands in the terminal:
+
+```javascript
+$ wget https://download.redis.io/releases/redis-6.2.4.tar.gz
+$ tar xzf redis-6.2.4.tar.gz
+$ cd redis-6.2.4
+$ make
+```
+
+- Start Redis with the `redis-server` command in the terminal
+
 - You can run the server from your terminal instead of docker in dev: `npm run dev`
 
 - You can run the server from your terminal in prod: `npm start`
 
 - You can generate TypeScript files based on the schema: `npm run codegen`
+
+# Solution
+
+- Ensure Docker container (or local server) and Redis server are up and running
+
+- Go to (http://localhost:4000/graphql) and run the following query: 
+
+```
+query {
+  labels {
+    label
+    bands {
+      name
+      festivals {
+        name
+      }
+    }
+  }
+}
+```

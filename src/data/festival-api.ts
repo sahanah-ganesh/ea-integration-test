@@ -3,15 +3,16 @@ import { removeDuplicates } from '../utils/removeDuplicates'
 import { sortAscending } from '../utils/sortAscending'
 import { arrayCheck } from '../utils/arrayCheck'
 import { transformDataAllChecks } from '../utils/transformDataAllChecks'
-import axios from 'axios'
+import axios, { AxiosResponse } from 'axios'
 import logger from '../utils/logger'
+import { Bands } from '../interfaces/bands'
 
 // using async redis which is a wrapper allowing the use of async/await for redis
 const asyncRedis = require('async-redis')
 
 const client = asyncRedis.createClient()
 
-client.on('error', function (err: any) {
+client.on('error', function (err: Error) {
   logger.error(err)
 })
 
@@ -21,11 +22,14 @@ export default class FestivalAPI extends RESTDataSource {
   async fetchFromCache() {
     const response = await client
       .get('data')
-      .then((res: any) => {
-        const parsedResponse = JSON.parse(res)
-        return parsedResponse
+      .then((res: string) => {
+        if (res) {
+          const parsedResponse = JSON.parse(res)
+          return parsedResponse
+        }
+        return this.fetchFromAPI()
       })
-      .catch((err: any) => {
+      .catch((err: Error) => {
         logger.error('Error fetching from cache: ', err)
         return this.fetchFromAPI()
       })
@@ -41,7 +45,7 @@ export default class FestivalAPI extends RESTDataSource {
     logger.debug('Fetching festivals...')
     const response = axios
       .get(url)
-      .then((response: any) => {
+      .then((response: AxiosResponse) => {
         if (response.data && response.headers['content-length'] > 1000) {
           logger.info('Successfully fetched festivals')
           const dataTransformed = transformDataAllChecks(response.data)
@@ -51,7 +55,7 @@ export default class FestivalAPI extends RESTDataSource {
         logger.error('Returned empty array')
         return []
       })
-      .catch((error: any) => {
+      .catch((error: Error) => {
         logger.error('Error in fetching festivals: ', error)
       })
     return response
@@ -66,12 +70,12 @@ export default class FestivalAPI extends RESTDataSource {
 
   // checks if the band name in the query is the same as the band name in the data
   // returns array of band name objects sorted by ascending alphabet
-  async getFestivalsByBandName(name: any) {
+  async getFestivalsByBandName(name: string) {
     const allFestivals = await this.getFestivals()
-    let result: any = []
+    let result: any[] = []
     for (const obj of allFestivals) {
       if (obj.bands) {
-        obj.bands.map((band: any) => {
+        obj.bands.map((band: Bands) => {
           if (band.name == name) {
             result.push({ name: obj.name })
           }
@@ -81,7 +85,7 @@ export default class FestivalAPI extends RESTDataSource {
     return sortAscending(result)
   }
 
-  async getFestivalBandsByName(name: any) {
+  async getFestivalBandsByName(name: string) {
     const festivalsArray = await this.getFestivalsByBandName(name)
     return [
       {
@@ -93,9 +97,9 @@ export default class FestivalAPI extends RESTDataSource {
 
   // goes through array of band objects to check if recordLabel matches query label
   // runs query with those band names to return festivals, sorts ascending alphabet and returns transformed data structure
-  async getLabelFestivalBandsByName(label: any) {
+  async getLabelFestivalBandsByName(label: string) {
     const allFestivals = await this.getFestivals()
-    const result: any = []
+    const result = []
     for (const obj of allFestivals) {
       if (obj.bands) {
         for (const band of obj.bands) {
@@ -113,7 +117,7 @@ export default class FestivalAPI extends RESTDataSource {
   // similar to above function but returning all labels with a transformed data structure
   async getLabels() {
     const allFestivals = await this.getFestivals()
-    let result: any = []
+    let result = []
     for (const obj of allFestivals) {
       if (obj.bands) {
         for (const band of obj.bands) {

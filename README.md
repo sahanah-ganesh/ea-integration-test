@@ -57,7 +57,7 @@ Elements for you to consider:
 
 - Redis for cache. As API endpoint is throttled and occassionally returns partial data, the result of a successful API call is saved in the cache and all further queries are performed from the cached data
 
-- TypeScript is being used but more interfaces will need to be created to prevent any types throughout the codebase
+- TypeScript
 
 - GraphQL-Codegen to introspect GraphQL schema and conver to TypeScript types. Especially useful for resolver's types
 
@@ -99,6 +99,8 @@ $ make
 ```
 
 - Start Redis with the `redis-server` command in the terminal
+
+- Stop Redis with the `redis-cli shutdown` command in the terminal
 
 - You can run the server from your terminal instead of docker in dev: `npm run dev`
 
